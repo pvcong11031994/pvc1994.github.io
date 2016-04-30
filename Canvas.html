@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Video Demo</title>
+</head>
+
+<body>
+    <h2>Video Demo:</h2>
+    <video id="v" autoplay width="400" height="300" controls loop>
+        <source src="video/Conan.mp4" type="video/mp4">
+    </video>
+
+    <h2>Video with Invert: </h2>
+    <canvas id="c2" width="400" height="300"></canvas>
+
+    <h2>Video with Gaussion: </h2>
+    <canvas id="c" width="400" height="300"></canvas>
+    <input type="range" min="0" max="50" value="30" id="slider" />
+
+    <script type="text/javascript" src="js/stackblur.js"></script>
+    <script>
+        var v = document.getElementById('v');
+        var canvas = document.getElementById('c');
+        var context = canvas.getContext('2d');
+        var back = document.createElement('canvas');
+        var backcontext = back.getContext('2d');
+
+        var canvas2 = document.getElementById('c2');
+        var context2 = canvas2.getContext('2d');
+        var slider = document.getElementById("slider");
+
+        var cw, ch;
+
+        var i;
+
+        v.addEventListener("play", function () {
+            i = window.setInterval(function () {
+                //Canvas 1
+                context2.drawImage(v, 0, 0, 600, 250);
+                context2.crossOrigin = 'anonymous';
+                var idata = context2.getImageData(0, 0, 600, 250);
+                console.log(context2.getImageData(0, 0, 600, 250));
+                var data = idata.data;
+                for (var i = 0; i < data.length; i += 4) {
+                    var r = data[i];
+                    var g = data[i + 1];
+                    var b = data[i + 2];
+                    var brightness = data[i + 3];
+                    data[i] = 255 - r;
+                    data[i + 1] = 255 - g;
+                    data[i + 2] = 255 - b;
+                }
+                idata.data = data;
+                // Draw the pixels onto the visible canvas
+                context2.putImageData(idata, 0, 0);
+            }, 10);
+        }, false);
+
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            v.addEventListener('play', function () {
+                // Canvas 1
+
+                // canvas 2
+                cw = v.clientWidth;
+                ch = v.clientHeight;
+                canvas.width = cw;
+                canvas.height = ch;
+                back.width = cw;
+                back.height = ch;
+                drawGaussion(v, context, backcontext, cw, ch);
+            }, false);
+
+        }, false);
+
+        function drawGaussion(v, c, bc, w, h) {
+            if (v.paused || v.ended) return false;
+            // First, draw it into the backing canvas
+            bc.drawImage(v, 0, 0, w, h);
+            // Grab the pixel data from the backing canvas
+            var idata = bc.getImageData(0, 0, w, h);
+            var data = idata.data;
+            // Loop through the pixels, turning them grayscale
+          
+            idata.data = data;
+            // Draw the pixels onto the visible canvas
+            c.putImageData(idata, 0, 0);
+            StackBlur.canvasRGB(canvas, 0, 0, canvas.width, canvas.height, slider.value);
+            // Start over!
+            setTimeout(function () { drawGaussion(v, c, bc, w, h); }, 0);
+        }
+    </script>
+
+</body>
+</html>
